@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{Actor, EntityCreateData, EntityData, Interface};
 
@@ -12,7 +12,7 @@ struct IntermediateEntity {
 pub struct World {
     intermediate_entities: Vec<IntermediateEntity>,
     live_entities: HashMap<u32, EntityData>,
-    actors: Vec<Box<dyn Actor>>,
+    actors: Rc<RefCell<Vec<Box<dyn Actor>>>>,
     next_id: u32,
 }
 impl World {
@@ -20,7 +20,9 @@ impl World {
         World {
             intermediate_entities: Vec::new(),
             live_entities: HashMap::new(),
-            actors: Vec::new(),
+            // One way to solve this, but a bit messy to have to clone the actors every time
+            // and borrow.  Somewhat sketchy.
+            actors: Rc::new(RefCell::new(Vec::new())),
             next_id: 0,
         }
     }
@@ -29,11 +31,13 @@ impl World {
     where
         A: Actor + 'static,
     {
-        self.actors.push(Box::new(actor));
+        self.actors.borrow_mut().push(Box::new(actor));
     }
     pub fn frame(&mut self) {
         // go through intermediate entities, decrement their wait time, and if zero, promote them to live entities
-        for a in &mut self.actors {
+        let actors = self.actors.clone();
+        let mut actors = actors.borrow_mut();
+        for a in actors.iter_mut() {
             a.on_pre_frame(self);
         }
         let new_indices = self
@@ -53,7 +57,7 @@ impl World {
             let entity = self.intermediate_entities.remove(index);
             self.live_entities.insert(entity.id, entity.data);
         }
-        for a in self.actors.iter_mut() {
+        for a in actors.iter_mut() {
             a.on_post_frame(self);
         }
     }
