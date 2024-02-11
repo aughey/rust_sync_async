@@ -17,7 +17,7 @@ impl Actor for SimpleBehavior {
     fn on_post_frame(&mut self, _iface: &mut dyn Interface) -> Result<()> {
         Ok(())
     }
-    fn on_entity_created(&mut self, id: u32) -> Result<()> {
+    fn on_entity_created(&mut self, id: u32, _iface: & dyn Interface) -> Result<()> {
         println!("SimpleBehavior: Entity created: {}", id);
         Ok(())
     }
@@ -51,7 +51,7 @@ impl Actor for MoreComplexBehavior {
     fn on_post_frame(&mut self, _iface: &mut dyn Interface) -> Result<()> {
         Ok(())
     }
-    fn on_entity_created(&mut self, id: u32) -> Result<()> {
+    fn on_entity_created(&mut self, id: u32, _iface: & dyn Interface) -> Result<()> {
         println!("MoreComplexBehavior: Entity created: {}", id);
         Ok(())
     }

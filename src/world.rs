@@ -35,7 +35,7 @@ impl World {
                 let id = entity.id;
                 self.live_entities.insert(id, entity.data.clone());
                 for actor in actors.iter_mut() {
-                    if let Err(e) = actor.on_entity_created(id) {
+                    if let Err(e) = actor.on_entity_created(id,self) {
                         errors.push(e);
                     }
                 }
