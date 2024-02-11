@@ -1,30 +1,74 @@
-use std::collections::HashMap;
 use anyhow::Result;
+use std::collections::HashMap;
 
-use crate::{EntityCreateData, EntityData, Interface, IntermediateEntity};
+use crate::{Actor, EntityCreateData, EntityData, Interface};
+
+struct IntermediateEntity {
+    data: EntityCreateData,
+    id: u32,
+    wait_time: u32,
+}
 
 pub struct World {
     intermediate_entities: Vec<IntermediateEntity>,
     live_entities: HashMap<u32, EntityData>,
+    actors: Vec<Box<dyn Actor>>,
     next_id: u32,
 }
 impl World {
-    fn new() -> Self {
+    pub fn new() -> Self {
         World {
             intermediate_entities: Vec::new(),
             live_entities: HashMap::new(),
+            actors: Vec::new(),
             next_id: 0,
         }
+    }
 
+    pub fn add_actor<A>(&mut self, actor: A)
+    where
+        A: Actor + 'static,
+    {
+        self.actors.push(Box::new(actor));
+    }
+    pub fn frame(&mut self) {
+        // go through intermediate entities, decrement their wait time, and if zero, promote them to live entities
+        for a in &mut self.actors {
+            a.on_pre_frame(self);
+        }
+        let new_indices = self
+            .intermediate_entities
+            .iter_mut()
+            .enumerate()
+            .filter_map(|(index, entity)| {
+                entity.wait_time -= 1;
+                if entity.wait_time == 0 {
+                    Some(index)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        for index in new_indices {
+            let entity = self.intermediate_entities.remove(index);
+            self.live_entities.insert(entity.id, entity.data);
+        }
+        for a in self.actors.iter_mut() {
+            a.on_post_frame(self);
+        }
     }
 }
 
 impl Interface for World {
-    fn create_entity_request(&mut self, data: EntityCreateData) -> Result<IntermediateEntity> {
+    fn create_entity_request(&mut self, data: EntityCreateData) -> Result<u32> {
         let id = self.next_id;
-        self.next_id += 1;
-        self.live_entities.insert(id, data);
-        Ok(IntermediateEntity { id })
+        self.next_id = self.next_id.wrapping_add(1);
+        self.intermediate_entities.push(IntermediateEntity {
+            data,
+            id,
+            wait_time: 60,
+        });
+        Ok(id)
     }
 
     fn destroy_entity_request(&mut self, id: u32) -> bool {
