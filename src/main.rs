@@ -7,14 +7,16 @@ use rust_sync_async::Actor;
 async fn main() -> Result<()> {
     let mut world = world::World::new();
 
-    let simple_behavior = behaviour::SimpleBehavior::new();
-    let mut actors = vec![simple_behavior];
+    let mut actors: Vec<Box<dyn Actor>> = vec![
+        Box::new(behaviour::SimpleBehavior::new()),
+        Box::new(behaviour::MoreComplexBehavior::new()),
+    ];
 
     for _ in 0..10 {
         for actor in actors.iter_mut() {
             actor.on_pre_frame(&mut world)?;
         }
-        world.frame()?;
+        world.frame(actors.iter_mut())?;
         for actor in actors.iter_mut() {
             actor.on_post_frame(&mut world)?;
         }

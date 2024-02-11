@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use crate::{Actor, EntityCreateData, EntityData, Interface};
 
@@ -23,25 +23,28 @@ impl World {
         }
     }
 
-    pub fn frame(&mut self) -> Result<()> {
+    pub fn frame<'a, A>(&mut self, actors: impl IntoIterator<Item = &'a mut A>) -> Result<()>
+    where
+        A: Actor + 'static,
+    {
         // go through intermediate entities, decrement their wait time, and if zero, promote them to live entities
-        let new_indices = self
-            .intermediate_entities
-            .iter_mut()
-            .enumerate()
-            .filter_map(|(index, entity)| {
-                entity.wait_time -= 1;
-                if entity.wait_time == 0 {
-                    Some(index)
-                } else {
-                    None
+        let mut errors = Vec::new();
+        self.intermediate_entities.retain_mut(|entity| {
+            entity.wait_time -= 1;
+            if entity.wait_time == 0 {
+                let id = entity.id;
+                self.live_entities.insert(id, entity.data.clone());
+                for actor in actors {
+                    if let Err(e) = actor.on_entity_created(id) {
+                        errors.push(e);
+                    }
                 }
-            })
-            .collect::<Vec<_>>();
-        for index in new_indices {
-            let entity = self.intermediate_entities.remove(index);
-            self.live_entities.insert(entity.id, entity.data);
-        }
+                false
+            } else {
+                true
+            }
+        });
+
         Ok(())
     }
 }
@@ -53,7 +56,7 @@ impl Interface for World {
         self.intermediate_entities.push(IntermediateEntity {
             data,
             id,
-            wait_time: 60,
+            wait_time: 2,
         });
         Ok(id)
     }
