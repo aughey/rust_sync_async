@@ -18,11 +18,11 @@ impl Actor for SimpleBehavior {
         Ok(())
     }
     fn on_entity_created(&mut self, id: u32) -> Result<()> {
-        println!("Entity created: {}", id);
+        println!("SimpleBehavior: Entity created: {}", id);
         Ok(())
     }
     fn on_entity_destroyed(&mut self, id: u32) -> Result<()> {
-        println!("Entity destroyed: {}", id);
+        println!("SimpleBehavior: Entity destroyed: {}", id);
         Ok(())
     }
 }
@@ -52,11 +52,11 @@ impl Actor for MoreComplexBehavior {
         Ok(())
     }
     fn on_entity_created(&mut self, id: u32) -> Result<()> {
-        println!("Entity created: {}", id);
+        println!("MoreComplexBehavior: Entity created: {}", id);
         Ok(())
     }
     fn on_entity_destroyed(&mut self, id: u32) -> Result<()> {
-        println!("Entity destroyed: {}", id);
+        println!("MoreComplexBehavior: Entity destroyed: {}", id);
         Ok(())
     }
 }

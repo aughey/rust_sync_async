@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{collections::HashMap, vec};
+use std::collections::HashMap;
 
 use crate::{Actor, EntityCreateData, EntityData, Interface};
 
@@ -23,7 +23,7 @@ impl World {
         }
     }
 
-    pub fn frame<'a, A>(&mut self, actors: impl IntoIterator<Item = &'a mut A>) -> Result<()>
+    pub fn frame<'a, A>(&mut self, actors: &mut [A]) -> Result<()>
     where
         A: Actor + 'static,
     {
@@ -34,7 +34,7 @@ impl World {
             if entity.wait_time == 0 {
                 let id = entity.id;
                 self.live_entities.insert(id, entity.data.clone());
-                for actor in actors {
+                for actor in actors.iter_mut() {
                     if let Err(e) = actor.on_entity_created(id) {
                         errors.push(e);
                     }

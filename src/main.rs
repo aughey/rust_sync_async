@@ -16,7 +16,9 @@ async fn main() -> Result<()> {
         for actor in actors.iter_mut() {
             actor.on_pre_frame(&mut world)?;
         }
-        world.frame(actors.iter_mut())?;
+
+        world.frame(actors.as_mut_slice())?;
+
         for actor in actors.iter_mut() {
             actor.on_post_frame(&mut world)?;
         }
