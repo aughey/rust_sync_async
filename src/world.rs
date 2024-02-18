@@ -28,7 +28,6 @@ impl World {
         A: Actor + 'static,
     {
         // go through intermediate entities, decrement their wait time, and if zero, promote them to live entities
-        let mut errors = Vec::new();
         let mut created = Vec::new();
         self.intermediate_entities.retain_mut(|entity| {
             entity.wait_time -= 1;
@@ -42,6 +41,7 @@ impl World {
             }
         });
 
+        let mut errors = Vec::new();
         for id in created {
             for actor in actors.iter_mut() {
                 if let Err(e) = actor.on_entity_created(id, self) {

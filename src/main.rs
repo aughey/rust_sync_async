@@ -5,6 +5,7 @@ use rust_sync_async::Actor;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
     let mut world = world::World::new();
 
     let mut actors: Vec<Box<dyn Actor>> = vec![

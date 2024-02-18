@@ -1,6 +1,7 @@
 use crate::{Actor, EntityCreateData, Interface};
 use anyhow::Result;
 use glam::Vec3;
+use tracing::{error, info};
 use std::time::{Duration, Instant};
 
 pub struct SimpleBehavior {}
@@ -12,18 +13,18 @@ impl SimpleBehavior {
 impl Actor for SimpleBehavior {
     //impl Actor for SimpleBehavior {
     fn on_pre_frame(&mut self, _iface: &mut dyn Interface) -> Result<()> {
-        //println!("SimpleBehavior on_frame");
+        //info!("SimpleBehavior on_frame");
         Ok(())
     }
     fn on_post_frame(&mut self, _iface: &mut dyn Interface) -> Result<()> {
         Ok(())
     }
     fn on_entity_created(&mut self, id: u32, _iface: & dyn Interface) -> Result<()> {
-        println!("SimpleBehavior: Entity created: {}", id);
+        info!("SimpleBehavior: Entity created: {}", id);
         Ok(())
     }
     fn on_entity_destroyed(&mut self, id: u32) -> Result<()> {
-        println!("SimpleBehavior: Entity destroyed: {}", id);
+        info!("SimpleBehavior: Entity destroyed: {}", id);
         Ok(())
     }
 }
@@ -51,7 +52,7 @@ impl Actor for MoreComplexBehavior {
     fn on_pre_frame(&mut self, iface: &mut dyn Interface) -> Result<()> {
         match self.state {
             ComplexState::SetupTimer => {
-                println!("setting up timer");
+                info!("setting up timer");
                 self.state = ComplexState::WaitForCreate(Instant::now());
             }
             ComplexState::WaitForCreate(time) => {
@@ -62,13 +63,15 @@ impl Actor for MoreComplexBehavior {
                         orientation: Vec3::new(0.0, 0.0, 0.0),
                     })?;
                     self.state = ComplexState::CreatePending(Instant::now());
-                  println!("create request sent, waiting for response");
+                  info!("create request sent, waiting for response");
                 }
             }
             ComplexState::CreatePending(time) => {
                 if time.elapsed() > Duration::from_secs(5) {
                     // We didn't get the entity created callback in time, so we'll just wait for the next frame
-                    panic!("Didn't create entity in time");
+                    error!("Didn't create entity in time, waiting for next frame to try again.");
+                    // to back to setting up timer
+                    self.state = ComplexState::SetupTimer;
                 }
             }
             ComplexState::WaitForDestroy(id,time) => {
@@ -76,7 +79,7 @@ impl Actor for MoreComplexBehavior {
                     // Send the destroy
                     iface.destroy_entity_request(id);
                     self.state = ComplexState::SetupTimer;
-                    println!("destroy request sent, going back to top of state");
+                    info!("destroy request sent, going back to top of state");
                 }
             }
         }
@@ -86,12 +89,12 @@ impl Actor for MoreComplexBehavior {
         Ok(())
     }
     fn on_entity_created(&mut self, id: u32, _iface: & dyn Interface) -> Result<()> {
-        println!("MoreComplexBehavior: Entity created: {}", id);
+        info!("MoreComplexBehavior: Entity created: {}", id);
         self.state = ComplexState::WaitForDestroy(id,Instant::now());
         Ok(())
     }
     fn on_entity_destroyed(&mut self, id: u32) -> Result<()> {
-        println!("MoreComplexBehavior: Entity destroyed: {}", id);
+        info!("MoreComplexBehavior: Entity destroyed: {}", id);
         Ok(())
     }
 }
