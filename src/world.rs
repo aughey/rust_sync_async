@@ -43,12 +43,12 @@ impl World {
         });
 
         for id in created {
-                for actor in actors.iter_mut() {
-                    if let Err(e) = actor.on_entity_created(id,self) {
-                        errors.push(e);
-                    }
+            for actor in actors.iter_mut() {
+                if let Err(e) = actor.on_entity_created(id, self) {
+                    errors.push(e);
                 }
             }
+        }
 
         Ok(())
     }

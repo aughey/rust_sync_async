@@ -12,7 +12,8 @@ async fn main() -> Result<()> {
         Box::new(behaviour::MoreComplexBehavior::new()),
     ];
 
-    for _ in 0..10 {
+    //for _ in 0..10 {
+    loop {
         for actor in actors.iter_mut() {
             actor.on_pre_frame(&mut world)?;
         }
