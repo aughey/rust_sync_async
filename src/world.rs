@@ -29,21 +29,26 @@ impl World {
     {
         // go through intermediate entities, decrement their wait time, and if zero, promote them to live entities
         let mut errors = Vec::new();
+        let mut created = Vec::new();
         self.intermediate_entities.retain_mut(|entity| {
             entity.wait_time -= 1;
             if entity.wait_time == 0 {
                 let id = entity.id;
                 self.live_entities.insert(id, entity.data.clone());
-                for actor in actors.iter_mut() {
-                    if let Err(e) = actor.on_entity_created(id,self) {
-                        errors.push(e);
-                    }
-                }
+                created.push(id);
                 false
             } else {
                 true
             }
         });
+
+        for id in created {
+                for actor in actors.iter_mut() {
+                    if let Err(e) = actor.on_entity_created(id,self) {
+                        errors.push(e);
+                    }
+                }
+            }
 
         Ok(())
     }
